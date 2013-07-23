@@ -1,11 +1,10 @@
 package
 {
-	import com.core.debug.Debugger;
+	import com.debug.Debugger;
 	
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
 	import flash.events.StatusEvent;
-	import flash.net.LocalConnection;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFieldType;
@@ -29,7 +28,7 @@ package
 		}
 		
 		private function sendMessage(event:MouseEvent):void {
-			Debugger.debug(message.text);
+			Debugger.warn(message.text);
 		}
 		
 		private function onStatus(event:StatusEvent):void {
