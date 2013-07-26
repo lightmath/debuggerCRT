@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="400" height="500" backgroundAlpha="0.76" backgroundColor="#8FB4B1"
+			   creationComplete="init(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.core.data.MessageItem;
+			
+			import flashx.textLayout.conversion.TextConverter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			
+			private const CONNECT:String = "_lc_connection";
+			private var conn:LocalConnection;
+			
+			private function init(event:FlexEvent):void
+			{
+				_messages = [];
+				textArea.editable = false;
+				
+				var ac:ArrayCollection = new ArrayCollection(["0   DEBUG","1   INFO","2   WARN","3   ERROR", "all"]);
+				dropDownList.dataProvider= ac;
+				dropDownList.selectedIndex = 4;
+				dropDownList.addEventListener(IndexChangeEvent.CHANGE, onSelectHandle);
+				
+				initConect();
+			}
+			
+			private function initConect():void
+			{
+				conn = new LocalConnection();
+				conn.allowDomain("*");
+				conn.client = this;
+				try {
+					conn.connect(CONNECT);
+					var date:Date = new Date();
+					var timeStr:String = (date.month+1)+":"+date.date+"--"+date.hours+":"+date.minutes+":"+date.seconds+":"+date.milliseconds;
+					textArea.text = "【"+timeStr+"】开始";
+				} catch (error:ArgumentError) {
+					textArea.text = "Can't connect...the connection name is already being used by another SWF";
+				}
+				_mes = textArea.text+"<br>";
+			}
+			
+			private var _messages:Array;
+			private var _mes:String;
+			public function onData(level:uint, msg:String):void
+			{
+				var item:MessageItem = new MessageItem(msg, level);
+				_messages.push(item);
+				_mes += item.toString();
+				textArea.textFlow = TextConverter.importToFlow(_mes, TextConverter.TEXT_FIELD_HTML_FORMAT);
+				if(_lockFlag==false)
+				{
+					textArea.validateNow();
+					textArea.scroller.verticalScrollBar.value = textArea.scroller.verticalScrollBar.maximum;
+				}
+			}
+			
+			private var _selectStr:String;
+			private function onSelectHandle(e:IndexChangeEvent):void
+			{
+				var index:uint = e.newIndex;
+				if(index==4) 
+				{
+					textArea.textFlow = TextConverter.importToFlow(_mes, TextConverter.TEXT_FIELD_HTML_FORMAT);
+					return;
+				}
+				_selectStr = "";
+				for each(var item:MessageItem in _messages)
+				{
+					if(index == item.level)
+					{
+						_selectStr += item.toString();
+					}
+				}
+				textArea.textFlow = TextConverter.importToFlow(_selectStr, TextConverter.TEXT_FIELD_HTML_FORMAT);
+			}
+			
+			private function onClearTextHandle(e:MouseEvent):void
+			{
+				textArea.text = "";
+				_mes = "";
+				_messages.length = 0;
+			}
+			
+			private var _lockFlag:Boolean;
+			private function onLockTextRollHandle(e:MouseEvent):void
+			{
+				_lockFlag = lockBtn.selected;
+			}
+			
+			
+			private function onCopyAllHandle(e:MouseEvent):void
+			{
+				System.setClipboard(textArea.text);
+			}
+			
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:TextArea id="textArea" x="7" y="33" width="386" height="410"/>
+	<s:Label x="10" y="13" width="145" height="23" color="#030303" fontSize="15" fontWeight="bold"
+			 text="Flash调试器v0.01版"/>
+	<s:Button id="copyAllBtn" x="10" y="470" label="Copy All" click="onCopyAllHandle(event)"/>
+	<s:DropDownList id="dropDownList" x="162" y="470"></s:DropDownList>
+	<s:Button id="clearBtn" x="307" y="470" label="Clear" click="onClearTextHandle(event)"/>
+	<s:CheckBox id="lockBtn" x="307" y="446" label="lock" click="onLockTextRollHandle(event)"/>
+</s:Application>
